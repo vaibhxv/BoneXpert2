@@ -1,0 +1,10 @@
+[project]
+name = "bone-age-ai"
+version = "1.0.0"
+description = "Offline bone-age inference service (crop + bone-age models)."
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-q"

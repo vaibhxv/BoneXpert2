@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+
+# Local secrets / config
+.env
+
+# Model weights (downloaded, not committed)
+models/**/current/
+models/**/v*/
+!models/**/.gitkeep
+
+# Runtime artifacts
+uploads/*
+!uploads/.gitkeep
+logs/*
+!logs/.gitkeep
+
+# OS
+.DS_Store

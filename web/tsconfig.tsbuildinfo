@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/countup.tsx","./src/components/handskeleton.tsx","./src/components/healthbadge.tsx","./src/components/resultconsole.tsx","./src/components/scanviewer.tsx","./src/components/sextoggle.tsx","./src/components/uploader.tsx","./src/lib/api.ts","./vite.config.ts"],"version":"5.9.3"}
