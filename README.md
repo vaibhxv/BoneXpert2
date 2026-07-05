@@ -66,9 +66,52 @@ sudo apt update && sudo apt install -y python3.12-venv nodejs npm make
 git clone <your-repo> bonexpert && cd bonexpert
 
 make setup          # deps + models (one time)
-make deploy         # builds UI+API, starts pm2 (engine + gateway)
+make deploy         # builds UI+API, starts pm2 (engine + gateway + ngrok)
 
 npx pm2 startup     # (optional) start pm2 on boot; follow printed instructions
+```
+
+### Raspberry Pi + ngrok
+
+Install and authenticate ngrok once on the Pi before `make deploy`:
+
+```bash
+curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
+  | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
+
+echo "deb https://ngrok-agent.s3.amazonaws.com buster main" \
+  | sudo tee /etc/apt/sources.list.d/ngrok.list
+
+sudo apt update
+sudo apt install -y ngrok
+
+ngrok config add-authtoken <your-ngrok-token>
+```
+
+Then start and persist everything with PM2:
+
+```bash
+make deploy
+npx pm2 save
+npx pm2 startup
+```
+
+`npx pm2 startup` prints a `sudo ...` command. Run that printed command exactly
+once. After reboot, PM2 will restart the engine, API, and `bonexpert-ngrok`.
+
+By default ngrok exposes the app on a generated HTTPS URL. To use a reserved
+ngrok domain, start PM2 with `NGROK_URL`:
+
+```bash
+NGROK_URL=your-domain.ngrok-free.app make deploy
+npx pm2 save
+```
+
+Check status and logs:
+
+```bash
+npx pm2 status
+npx pm2 logs bonexpert-ngrok
 ```
 
 Then put nginx in front for TLS using the provided sample:
