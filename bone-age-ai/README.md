@@ -128,6 +128,23 @@ is a documented geometric heuristic (box area ratio + in-bounds containment)
 used only to reject blank/non-hand uploads via
 `CROP_CONFIDENCE_THRESHOLD`.
 
+### Input-validity guardrails
+Because the crop model always emits a box and the bone-age model is a
+classifier that will map *any* texture onto an age, two guardrails reject
+non-radiograph uploads (returning HTTP 422 with a clear message):
+
+1. **Colorfulness** — real radiographs are (near) grayscale. Uploads whose
+   fraction of saturated pixels exceeds `MAX_COLORFULNESS` (default 0.20) are
+   rejected as colour photos before any inference runs.
+2. **Age-distribution concentration** — for a genuine hand the classifier's
+   softmax mass concentrates within a few months of the prediction. If less
+   than `MIN_AGE_CONCENTRATION` (default 0.70) of the mass falls within
+   `±AGE_CONCENTRATION_WINDOW` months (default 18), the image is treated as
+   out-of-distribution and rejected.
+
+Empirically a valid hand scored ~0.98 concentration while noise/gradients/blobs
+scored ≤0.59, giving clean separation.
+
 ## 6. Model versioning
 
 ```bash

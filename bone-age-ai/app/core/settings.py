@@ -43,6 +43,16 @@ class Settings(BaseSettings):
     crop_padding: float = Field(default=0.05, ge=0.0, le=1.0)
     crop_confidence_threshold: float = Field(default=0.30, ge=0.0, le=1.0)
 
+    # --- Input validity guardrails (reject non-radiograph uploads) ---
+    # Max fraction of noticeably-coloured pixels before we treat the upload as a
+    # colour photo rather than an X-ray. Real radiographs are ~0.
+    max_colorfulness: float = Field(default=0.20, ge=0.0, le=1.0)
+    # The bone-age classifier's probability mass must concentrate within
+    # +/- `age_concentration_window` months of the predicted age by at least
+    # this fraction; diffuse distributions indicate an out-of-distribution image.
+    min_age_concentration: float = Field(default=0.70, ge=0.0, le=1.0)
+    age_concentration_window: int = Field(default=18, ge=1, le=120)
+
     # --- Upload limits ---
     max_upload_bytes: int = 25_000_000
 

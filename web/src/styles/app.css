@@ -204,9 +204,23 @@
   flex-wrap: wrap;
 }
 .controls__error {
-  color: var(--oxblood);
-  font-size: 0.8rem;
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  color: #f0b3a6;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(200, 85, 61, 0.5);
+  border-left: 3px solid var(--oxblood);
+  border-radius: var(--radius);
+  background: rgba(200, 85, 61, 0.08);
   overflow: hidden;
+}
+.controls__error-glyph {
+  color: var(--oxblood);
+  font-size: 1rem;
+  line-height: 1.3;
 }
 
 .btn {

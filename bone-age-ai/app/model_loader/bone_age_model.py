@@ -93,6 +93,28 @@ class BoneAgeModel:
         out = self._model(x.to(self._device), female.to(self._device))
         return float(torch.as_tensor(out).squeeze().detach().cpu().item())
 
+    @torch.inference_mode()
+    def predict_distribution(
+        self, preprocessed: np.ndarray, is_female: int
+    ) -> tuple[float, np.ndarray]:
+        """Return ``(bone_age_months, class_probabilities)``.
+
+        The class probabilities are the softmax over the ensemble's averaged
+        logits (class ``i`` == ``i`` months). The expected value of this
+        distribution is the predicted bone age. The full distribution lets the
+        pipeline gauge how *concentrated* the prediction is, which is used as an
+        out-of-distribution guardrail.
+        """
+        x = torch.from_numpy(preprocessed).unsqueeze(0).unsqueeze(0).float()
+        female = torch.tensor([int(is_female)])
+        logits = self._model(
+            x.to(self._device), female.to(self._device), return_logits=True
+        )
+        probs = logits.softmax(1)[0].detach().cpu().numpy().astype(np.float64)
+        indices = np.arange(probs.shape[0], dtype=np.float64)
+        months = float((probs * indices).sum())
+        return months, probs
+
     def warmup(self) -> None:
         """Run a dummy forward pass so the first real request is fast."""
         dummy = np.zeros((256, 256), dtype=np.uint8)

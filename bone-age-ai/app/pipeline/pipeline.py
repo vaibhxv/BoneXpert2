@@ -14,8 +14,8 @@ from app.core.logger import logger
 from app.core.settings import get_settings
 from app.model_loader.manager import ModelManager
 from app.pipeline.crop_service import CropService
-from app.pipeline.errors import LowCropConfidenceError
-from app.pipeline.image_io import decode_image
+from app.pipeline.errors import LowCropConfidenceError, NotARadiographError
+from app.pipeline.image_io import decode
 from app.pipeline.inference_service import InferenceService
 from app.pipeline.postprocess_service import PostprocessService
 from app.pipeline.preprocess_service import PreprocessService
@@ -58,8 +58,20 @@ class BoneAgePipeline:
 
         # 1. Decode + validate.
         t0 = time.perf_counter()
-        image = decode_image(image_bytes, filename)
+        decoded = decode(image_bytes, filename)
+        image = decoded.gray
         timings.decode_ms = _ms_since(t0)
+
+        # 1a. Guardrail: colour photos are not radiographs.
+        if decoded.colorfulness > self._settings.max_colorfulness:
+            logger.warning(
+                f"Rejected upload: colorfulness={decoded.colorfulness:.2f} "
+                f"> {self._settings.max_colorfulness:.2f}"
+            )
+            raise NotARadiographError(
+                "This image doesn't look like an X-ray — it appears to be a "
+                "colour photo. Please upload a hand radiograph."
+            )
 
         # 2. Crop.
         t0 = time.perf_counter()
@@ -79,24 +91,40 @@ class BoneAgePipeline:
         preprocessed = self._preprocess.run(crop.cropped)
         timings.preprocess_ms = _ms_since(t0)
 
-        # 4. Inference.
+        # 4. Inference (full class distribution for the OOD guardrail).
         t0 = time.perf_counter()
-        months = self._inference.predict_months(preprocessed, sex)
+        months, probs = self._inference.predict_distribution(preprocessed, sex)
         timings.inference_ms = _ms_since(t0)
 
+        # 4a. Guardrail: a genuine hand yields a concentrated age distribution.
+        concentration = self._inference.age_concentration(
+            probs, months, self._settings.age_concentration_window
+        )
         timings.total_ms = _ms_since(t_start)
 
         logger.info(
             "Pipeline complete: decode={}ms crop={}ms preprocess={}ms "
-            "inference={}ms total={}ms bone_age_months={:.2f}".format(
+            "inference={}ms total={}ms bone_age_months={:.2f} "
+            "concentration={:.3f}".format(
                 timings.decode_ms,
                 timings.crop_ms,
                 timings.preprocess_ms,
                 timings.inference_ms,
                 timings.total_ms,
                 months,
+                concentration,
             )
         )
+
+        if concentration < self._settings.min_age_concentration:
+            logger.warning(
+                f"Rejected upload: age concentration={concentration:.3f} "
+                f"< {self._settings.min_age_concentration:.2f}"
+            )
+            raise NotARadiographError(
+                "This doesn't appear to be a valid hand radiograph. "
+                "Please upload a clear hand X-ray."
+            )
 
         # 5. Post-process.
         return self._postprocess.build(

@@ -26,3 +26,9 @@ class LowCropConfidenceError(PipelineError):
     """Raised when no hand is confidently detected in the radiograph."""
 
     status_code = 422
+
+
+class NotARadiographError(PipelineError):
+    """Raised when the upload does not appear to be a hand radiograph."""
+
+    status_code = 422

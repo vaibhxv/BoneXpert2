@@ -40,3 +40,20 @@ def test_postprocess_converts_months_to_years():
 def test_sex_is_female_flag():
     assert Sex.female.is_female == 1
     assert Sex.male.is_female == 0
+
+
+def test_age_concentration_peaked_vs_diffuse():
+    n = 240
+    # Peaked distribution around month 120.
+    peaked = np.zeros(n)
+    peaked[110:131] = 1.0
+    peaked /= peaked.sum()
+    # Uniform (diffuse) distribution.
+    diffuse = np.full(n, 1.0 / n)
+
+    c_peaked = InferenceService.age_concentration(peaked, 120.0, window=18)
+    c_diffuse = InferenceService.age_concentration(diffuse, 120.0, window=18)
+
+    assert c_peaked > 0.9
+    assert c_diffuse < 0.35
+    assert c_peaked > c_diffuse

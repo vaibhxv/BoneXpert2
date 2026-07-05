@@ -149,15 +149,18 @@ export default function App() {
 
                   <AnimatePresence>
                     {phase === 'error' && error && (
-                      <motion.p
-                        className="controls__error mono"
+                      <motion.div
+                        className="controls__error"
                         role="alert"
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
                       >
-                        ⚠ {error}
-                      </motion.p>
+                        <span aria-hidden className="controls__error-glyph">
+                          ⚠
+                        </span>
+                        <span>{error}</span>
+                      </motion.div>
                     )}
                   </AnimatePresence>
                 </motion.div>
